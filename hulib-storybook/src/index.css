@@ -59,3 +59,95 @@ button[data-state="open"] {
   pointer-events: auto;
   cursor: pointer;
 }
+
+[data-item-actions] > * {
+  position: relative;
+  top: -3px;
+}
+
+[cmdk-group-heading] {
+  padding: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #333;
+  font-family: 'Public Sans', ui-sans-serif, system-ui, sans-serif;
+}
+
+/* NavigationMenu: dropdown trigger — 3D outline button matching HulibButton outline */
+[data-hulib-nav-trigger] {
+  font-family: 'Public Sans', ui-sans-serif, system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #333;
+  background: transparent;
+  border: 3px solid #333;
+  border-radius: 8px;
+  padding: 8px 18px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  white-space: nowrap;
+  box-shadow: 0 8px 0 0 #333;
+  transform: translateY(0);
+  transition:
+    box-shadow 420ms cubic-bezier(0.34, 0, 0.36, 1),
+    transform 420ms cubic-bezier(0.34, 0, 0.36, 1),
+    border-color 200ms ease,
+    color 200ms ease,
+    background 200ms ease;
+}
+
+[data-hulib-nav-trigger]:hover {
+  box-shadow: 0 3px 0 0 #333;
+  transform: translateY(5px);
+  transition:
+    box-shadow 270ms cubic-bezier(0.34, 0, 0.36, 1),
+    transform 270ms cubic-bezier(0.34, 0, 0.36, 1);
+}
+
+[data-hulib-nav-trigger][data-state="open"] {
+  box-shadow: 0 3px 0 0 #333;
+  transform: translateY(5px);
+}
+
+/* NavigationMenu: plain link item (no dropdown) */
+.hulib-nav-link {
+  font-family: 'Public Sans', ui-sans-serif, system-ui, sans-serif;
+  font-size: 1rem;
+  font-weight: 700;
+  color: #333;
+  text-decoration: none;
+  border: 3px solid #333;
+  border-radius: 8px;
+  padding: 8px 18px;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  user-select: none;
+  outline: none;
+  white-space: nowrap;
+  box-shadow: 0 8px 0 0 #333;
+  transform: translateY(0);
+  transition:
+    box-shadow 420ms cubic-bezier(0.34, 0, 0.36, 1),
+    transform 420ms cubic-bezier(0.34, 0, 0.36, 1),
+    color 200ms ease;
+}
+
+.hulib-nav-link:hover {
+  box-shadow: 0 3px 0 0 #333;
+  transform: translateY(5px);
+  transition:
+    box-shadow 270ms cubic-bezier(0.34, 0, 0.36, 1),
+    transform 270ms cubic-bezier(0.34, 0, 0.36, 1);
+}
+
+/* NavigationMenu: viewport panel — 3D bottom strip like HulibButton */
+[data-hulib-nav-viewport] {
+  box-shadow: 0 6px 0 0 #333;
+}
