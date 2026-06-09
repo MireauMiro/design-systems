@@ -1,0 +1,46 @@
+import * as React from 'react'
+import * as ScrollAreaPrimitive from '@radix-ui/react-scroll-area'
+import { cn } from '@/lib/utils'
+
+const ScrollArea = React.forwardRef<
+  React.ElementRef<typeof ScrollAreaPrimitive.Root>,
+  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Root>
+>(({ className, children, ...props }, ref) => (
+  <ScrollAreaPrimitive.Root
+    ref={ref}
+    className={cn('relative overflow-hidden', className)}
+    {...props}
+  >
+    <ScrollAreaPrimitive.Viewport className="h-full w-full rounded-[inherit]">
+      {children}
+    </ScrollAreaPrimitive.Viewport>
+    <ScrollBar orientation="vertical" />
+    <ScrollBar orientation="horizontal" />
+    <ScrollAreaPrimitive.Corner className="bg-transparent" />
+  </ScrollAreaPrimitive.Root>
+))
+ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName
+
+const ScrollBar = React.forwardRef<
+  React.ElementRef<typeof ScrollAreaPrimitive.Scrollbar>,
+  React.ComponentPropsWithoutRef<typeof ScrollAreaPrimitive.Scrollbar>
+>(({ className, orientation = 'vertical', ...props }, ref) => (
+  <ScrollAreaPrimitive.Scrollbar
+    ref={ref}
+    orientation={orientation}
+    className={cn(
+      'flex touch-none select-none transition-opacity duration-200',
+      orientation === 'vertical' && 'h-full w-2.5 border-l-2 border-l-[#333]/10 p-px',
+      orientation === 'horizontal' && 'h-2.5 flex-col border-t-2 border-t-[#333]/10 p-px',
+      className
+    )}
+    {...props}
+  >
+    <ScrollAreaPrimitive.Thumb
+      className="relative flex-1 rounded-full bg-[#333]/40 transition-colors hover:bg-[#9900ff]"
+    />
+  </ScrollAreaPrimitive.Scrollbar>
+))
+ScrollBar.displayName = ScrollAreaPrimitive.Scrollbar.displayName
+
+export { ScrollArea, ScrollBar }

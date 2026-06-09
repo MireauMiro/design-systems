@@ -63,6 +63,34 @@ function NavLinkItem({
   )
 }
 
+// White 3D button for use on coloured/gradient backgrounds
+function FeaturedButton({ children }: { children: React.ReactNode }) {
+  const [hovered, setHovered] = React.useState(false)
+  return (
+    <button
+      className="w-full flex items-center justify-center font-extrabold cursor-pointer"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        fontFamily: 'Public Sans',
+        fontSize: '16px',
+        color: '#9900ff',
+        background: 'white',
+        border: 'none',
+        borderRadius: '8px',
+        padding: '10px 18px',
+        boxShadow: `0 ${hovered ? 2 : 8}px 0 0 rgba(0, 0, 0, 0.22)`,
+        transform: `translateY(${hovered ? 6 : 0}px)`,
+        transition: hovered
+          ? 'box-shadow 270ms cubic-bezier(0.34, 0, 0.36, 1), transform 270ms cubic-bezier(0.34, 0, 0.36, 1)'
+          : 'box-shadow 420ms cubic-bezier(0.34, 0, 0.36, 1), transform 420ms cubic-bezier(0.34, 0, 0.36, 1)',
+      }}
+    >
+      {children}
+    </button>
+  )
+}
+
 // Section label inside panels (matches Hulib ItemHeader style)
 function PanelLabel({ children }: { children: React.ReactNode }) {
   return (
@@ -159,7 +187,10 @@ export const WithFeaturedPanel: Story = {
               <div className="p-2 md:w-[520px]">
                 <div className="grid md:grid-cols-[200px_1fr] gap-2">
                   {/* Featured purple card */}
-                  <div className="flex flex-col justify-between rounded-[10px] bg-[#9900ff] p-4">
+                  <div
+                    className="flex flex-col justify-between rounded-[10px] p-4 pb-6"
+                    style={{ background: 'linear-gradient(150deg, #7700cc 0%, #cc33ff 100%)' }}
+                  >
                     <div>
                       <SparklesIcon className="size-6 text-white/80 mb-3" />
                       <div className="text-base font-extrabold text-white mb-1" style={{ fontFamily: 'Public Sans' }}>Hulib UI</div>
@@ -167,10 +198,8 @@ export const WithFeaturedPanel: Story = {
                         Beautiful, accessible components built for modern React apps.
                       </div>
                     </div>
-                    <div className="mt-4">
-                      <HulibButton color="black" variant="outline" size="sm" className="w-full justify-center">
-                        Get started
-                      </HulibButton>
+                    <div className="mt-5">
+                      <FeaturedButton>Get started</FeaturedButton>
                     </div>
                   </div>
 
