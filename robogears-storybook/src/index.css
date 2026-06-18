@@ -1,0 +1,1174 @@
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;0,800;1,400&family=Share+Tech+Mono&display=swap');
+
+/* Blender Pro Bold — the "Cyber" font from Jhey's Cyberpunk codepen */
+@font-face {
+  font-family: 'Cyber';
+  src: url('https://assets.codepen.io/605876/Blender-Pro-Bold.otf') format('opentype');
+  font-display: swap;
+  font-weight: 700;
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Phosphor terminal base */
+    --background: 130 15% 4%;
+    --foreground: 133 100% 50%;
+
+    --card: 130 12% 6%;
+    --card-foreground: 133 100% 50%;
+
+    --popover: 130 12% 6%;
+    --popover-foreground: 133 100% 50%;
+
+    /* Cyberpunk 2077 yellow primary */
+    --primary: 56 100% 49%;
+    --primary-foreground: 0 0% 4%;
+
+    --secondary: 130 12% 10%;
+    --secondary-foreground: 133 70% 55%;
+
+    --muted: 130 12% 8%;
+    --muted-foreground: 133 45% 38%;
+
+    /* Neon cyan accent */
+    --accent: 191 100% 50%;
+    --accent-foreground: 0 0% 4%;
+
+    --destructive: 346 100% 50%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 133 25% 14%;
+    --input: 133 20% 10%;
+    --ring: 56 100% 49%;
+
+    --radius: 0.25rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    box-sizing: border-box;
+  }
+  html {
+    background-color: hsl(var(--background)) !important;
+  }
+  body {
+    @apply bg-background text-foreground;
+    background-color: hsl(var(--background)) !important;
+    /* CRT scanlines live on the page background, so content sits on top of them */
+    background-image:
+      repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 2px,
+        var(--rg-scanline, rgba(120, 255, 160, 0.15)) 3px,
+        var(--rg-scanline, rgba(120, 255, 160, 0.15)) 4px
+      ) !important;
+    background-attachment: fixed !important;
+    font-family: 'JetBrains Mono', 'Share Tech Mono', ui-monospace, monospace;
+    font-feature-settings: "rlig" 1, "calt" 1;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+    text-shadow: 0 0 10px rgba(0, 255, 65, 0.25);
+  }
+}
+
+/* Radix DropdownMenu internally sets body { pointer-events: none } when open. */
+button[data-state="open"] {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+[data-item-actions] > * {
+  position: relative;
+  top: -3px;
+}
+
+[cmdk-group-heading] {
+  padding: 12px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #2E7A3E;
+  font-family: 'JetBrains Mono', 'Share Tech Mono', ui-monospace, monospace;
+}
+
+/* ─── NavigationMenu: cyber HUD nav ─────────────────────────────────────── */
+
+/* Hexagonal shape — diagonal cuts top-right + bottom-left */
+:root {
+  --rg-nav-corner: 10px;
+  --rg-nav-shape: polygon(
+    0 0,
+    calc(100% - var(--rg-nav-corner)) 0,
+    100% var(--rg-nav-corner),
+    100% 100%,
+    var(--rg-nav-corner) 100%,
+    0 calc(100% - var(--rg-nav-corner))
+  );
+}
+
+/* Pulsating glow on hover — cyan, same feel as rg-btn-hover-glow */
+@keyframes rg-nav-hover-glow {
+  0%   { filter: drop-shadow(0 0  3px rgba(0, 212, 255, 0.28)); }
+  50%  { filter: drop-shadow(0 0 12px rgba(0, 212, 255, 0.62))
+                 drop-shadow(0 0 24px rgba(0, 212, 255, 0.22)); }
+  100% { filter: drop-shadow(0 0  3px rgba(0, 212, 255, 0.28)); }
+}
+
+/* Pulsating glow when open — phosphor green */
+@keyframes rg-nav-open-glow {
+  0%   { filter: drop-shadow(0 0  4px rgba(0, 255, 65, 0.35)); }
+  50%  { filter: drop-shadow(0 0 14px rgba(0, 255, 65, 0.68))
+                 drop-shadow(0 0 28px rgba(0, 255, 65, 0.28)); }
+  100% { filter: drop-shadow(0 0  4px rgba(0, 255, 65, 0.35)); }
+}
+
+/* Scan-line that sweeps up through the button on hover */
+@keyframes rg-nav-scan {
+  0%   { top: 104%; opacity: 0; }
+  8%   { opacity: 1; }
+  92%  { opacity: 1; }
+  100% { top: -3px; opacity: 0; }
+}
+
+/* Periodic RGB-split jitter on hover — fires ~every 4-5s */
+@keyframes rg-nav-jitter {
+  0%, 84%, 100% { transform: translateX(0); filter: none; }
+  86% { transform: translateX(-3px); filter: drop-shadow(3px 0 0 rgba(255, 0, 60, 0.65)); }
+  88% { transform: translateX( 3px); filter: drop-shadow(-3px 0 0 rgba(0, 212, 255, 0.65)); }
+  90% { transform: translateX(-1px); filter: drop-shadow(2px 0 0 rgba(255, 0, 60, 0.35)); }
+  92% { transform: translateX(0);    filter: none; }
+}
+
+/* Viewport glitch entrance — RGB-split + scale from top */
+@keyframes rg-nav-viewport-in {
+  0%   { opacity: 0; transform: scaleY(0.86);
+         filter: drop-shadow(-12px 0 0 rgba(255,0,60,0.85)) drop-shadow(12px 0 0 rgba(0,212,255,0.85)); }
+  14%  { opacity: 1; transform: scaleY(0.96);
+         filter: drop-shadow(-7px 0 0 rgba(255,0,60,0.55)) drop-shadow(7px 0 0 rgba(0,212,255,0.55)); }
+  28%  { transform: scaleY(1.02); filter: none; }
+  40%  { transform: scaleY(1.00);
+         filter: drop-shadow(-3px 0 0 rgba(255,0,60,0.25)) drop-shadow(3px 0 0 rgba(0,212,255,0.25)); }
+  55%  { filter: none; }
+  100% { opacity: 1; transform: scaleY(1); filter: none; }
+}
+
+/* ── Host: outer glow wrapper + targeting-bracket pseudo-elements ── */
+.rg-nav-host {
+  position: relative;
+  display: inline-flex;
+  border: none;
+  background: none;
+  outline: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  text-decoration: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Targeting bracket — top-left */
+.rg-nav-host::before {
+  content: '';
+  position: absolute;
+  top: -4px; left: -4px;
+  width: 9px; height: 9px;
+  border-top: 2px solid hsl(191 100% 50%);
+  border-left: 2px solid hsl(191 100% 50%);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(5px, 5px);
+  transition: opacity 140ms ease, transform 140ms ease;
+  z-index: 10;
+}
+
+/* Targeting bracket — bottom-right */
+.rg-nav-host::after {
+  content: '';
+  position: absolute;
+  bottom: -4px; right: -4px;
+  width: 9px; height: 9px;
+  border-bottom: 2px solid hsl(191 100% 50%);
+  border-right: 2px solid hsl(191 100% 50%);
+  opacity: 0;
+  pointer-events: none;
+  transform: translate(-5px, -5px);
+  transition: opacity 140ms ease, transform 140ms ease;
+  z-index: 10;
+}
+
+.rg-nav-host:hover {
+  animation: rg-nav-hover-glow 3.2s ease-in-out infinite;
+}
+
+.rg-nav-host[data-state="open"] {
+  animation: rg-nav-open-glow 2.8s ease-in-out infinite;
+}
+
+.rg-nav-host:hover::before,
+.rg-nav-host:hover::after,
+.rg-nav-host[data-state="open"]::before,
+.rg-nav-host[data-state="open"]::after {
+  opacity: 1;
+  transform: translate(0, 0);
+}
+
+/* ── Frame: clipped border layer ── */
+.rg-nav-frame {
+  display: inline-flex;
+  clip-path: var(--rg-nav-shape);
+  background: hsl(191 100% 50% / 0.55);
+  padding: 2px;
+  pointer-events: none;
+  transition: background 150ms ease;
+}
+
+.rg-nav-host:hover .rg-nav-frame {
+  background: hsl(191 100% 50%);
+}
+
+.rg-nav-host[data-state="open"] .rg-nav-frame {
+  background: hsl(133 100% 50%);
+}
+
+/* ── Inner: dark fill + scan-line + periodic jitter ── */
+.rg-nav-inner {
+  position: relative;
+  clip-path: var(--rg-nav-shape);
+  background: hsl(130 14% 5%);
+  color: hsl(191 100% 50%);
+  font-family: 'Cyber', 'JetBrains Mono', monospace;
+  font-size: 0.875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 7px 16px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  white-space: nowrap;
+  overflow: hidden;
+  transition: background 150ms ease, color 150ms ease;
+}
+
+.rg-nav-host:hover .rg-nav-inner {
+  background: hsl(130 14% 8%);
+  color: hsl(0 0% 100%);
+  animation: rg-nav-jitter 4.5s ease-in-out infinite;
+}
+
+.rg-nav-host[data-state="open"] .rg-nav-inner {
+  background: hsl(130 14% 8%);
+  color: hsl(133 100% 50%);
+  animation: rg-nav-jitter 3.8s ease-in-out infinite 0.6s;
+}
+
+/* Scan-line pseudo — sweeps bottom→top on hover */
+.rg-nav-inner::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; top: 100%;
+  height: 2px;
+  background: hsl(191 100% 88%);
+  box-shadow: 0 0 10px 3px hsl(191 100% 50%), 0 0 20px 6px hsl(191 100% 50% / 0.35);
+  pointer-events: none;
+  opacity: 0;
+}
+
+.rg-nav-host:hover .rg-nav-inner::after {
+  animation: rg-nav-scan 1.8s ease-in-out infinite;
+}
+
+.rg-nav-host[data-state="open"] .rg-nav-inner::after {
+  animation: rg-nav-scan 1.4s ease-in-out infinite;
+}
+
+/* ── Viewport: glitch entrance animation ── */
+.rg-nav-viewport[data-state="open"] {
+  animation: rg-nav-viewport-in 400ms ease-out both;
+}
+
+/* ── Panel content: link rows ── */
+.rg-nav-content-link {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  text-decoration: none;
+  outline: none;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: border-color 120ms ease, background 120ms ease;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.rg-nav-content-link:hover {
+  background: hsl(191 100% 50% / 0.06);
+  border-left-color: hsl(191 100% 50% / 0.65);
+}
+
+/* ── Panel content: icon box with diagonal clip ── */
+.rg-nav-content-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  clip-path: polygon(0 0, calc(100% - 6px) 0, 100% 6px, 100% 100%, 6px 100%, 0 calc(100% - 6px));
+  background: hsl(191 100% 50% / 0.10);
+  color: hsl(191 100% 50%);
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.rg-nav-content-link:hover .rg-nav-content-icon {
+  background: hsl(191 100% 50% / 0.22);
+  color: hsl(0 0% 100%);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rg-nav-host,
+  .rg-nav-host:hover,
+  .rg-nav-host[data-state="open"] { animation: none !important; }
+  .rg-nav-host:hover .rg-nav-inner,
+  .rg-nav-host[data-state="open"] .rg-nav-inner { animation: none !important; }
+  .rg-nav-inner::after { display: none; }
+  .rg-nav-viewport[data-state="open"] { animation: none !important; }
+}
+
+/* Sheet: neon glow on inner-facing edge per side */
+[data-sheet-side="right"]  {
+  box-shadow: -4px 0 24px 4px rgba(249,233,0,0.4);
+  border-left: 2px solid #F9E900;
+}
+[data-sheet-side="left"]   {
+  box-shadow:  4px 0 24px 4px rgba(249,233,0,0.4);
+  border-right: 2px solid #F9E900;
+}
+[data-sheet-side="top"]    {
+  box-shadow:  0  4px 24px 4px rgba(249,233,0,0.4);
+  border-bottom: 2px solid #F9E900;
+}
+[data-sheet-side="bottom"] {
+  box-shadow:  0 -4px 24px 4px rgba(249,233,0,0.4);
+  border-top: 2px solid #F9E900;
+}
+
+/* ─── Switch: neon glow off/on ───────────────────────────────────────────── */
+.robogears-switch {
+  position: relative;
+  isolation: isolate;
+  transition: background 200ms ease, box-shadow 200ms ease;
+}
+
+.robogears-switch::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  bottom: 0;
+  border-radius: 9999px;
+  z-index: 0;
+  pointer-events: none;
+  transition: background 200ms ease;
+}
+
+/* Off: dark track with dim border */
+.robogears-switch[data-state=unchecked] {
+  background: hsl(130 12% 8%);
+  border: 2px solid #0D2214;
+  box-shadow: none;
+}
+
+/* On: phosphor green glow track */
+.robogears-switch[data-state=checked] {
+  background: rgba(0, 255, 65, 0.2);
+  border: 2px solid #00FF41;
+  box-shadow:
+    0 0 10px 2px rgba(0, 255, 65, 0.5),
+    inset 0 0 8px 0 rgba(0, 255, 65, 0.1);
+}
+
+.robogears-switch[data-disabled] {
+  opacity: 0.4;
+}
+.robogears-switch[data-disabled]::before {
+  pointer-events: none;
+}
+
+/* ─── Spinner ─────────────────────────────────────────────────────────────── */
+@keyframes robogears-spin {
+  from { transform: rotate(0deg); }
+  to   { transform: rotate(360deg); }
+}
+
+/* ─── Button: cyberpunk (Jhey-style) ────────────────────────────────────── */
+
+:root {
+  --rg-btn-font:  'Cyber', 'JetBrains Mono', ui-sans-serif, sans-serif;
+  /* Octagon-ish: square corners except a diagonal cut top-right + bottom-left */
+  --rg-btn-shape: polygon(0 0, calc(100% - 12px) 0, 100% 14px, 100% 100%, 12px 100%, 0 calc(100% - 14px));
+  /* Same outline but pulled ~3px off the two diagonals only — straight edges stay flush */
+  --rg-diag-shape: polygon(0 0, calc(100% - 15px) 0, 100% 17px, 100% 100%, 15px 100%, 0 calc(100% - 17px));
+  --rg-btn-dark:  #050805;
+}
+
+/* Hover pulsating glow — applied to the (un-clipped) button host */
+@keyframes rg-btn-hover-glow {
+  0%   { filter: drop-shadow(0 0  2px rgba(var(--rg-rgb), 0.20)); }
+  50%  { filter: drop-shadow(0 0  7px rgba(var(--rg-rgb), 0.45))
+                 drop-shadow(0 0 15px rgba(var(--rg-rgb), 0.20)); }
+  100% { filter: drop-shadow(0 0  2px rgba(var(--rg-rgb), 0.20)); }
+}
+
+/* Text shimmy glitch — Jhey's shimmy-text */
+@keyframes rg-btn-shimmy {
+  0%             { clip-path: inset(2%  0 95% 0); }
+  2%, 8%         { clip-path: inset(78% 0 0   0); transform: translateX(calc(var(--shimmy-dist, 5) * -1%)); }
+  6%             { clip-path: inset(78% 0 0   0); transform: translateX(calc(var(--shimmy-dist, 5) *  1%)); }
+  9%             { clip-path: inset(78% 0 0   0); transform: translateX(0); }
+  10%            { clip-path: inset(44% 0 46% 0); transform: translateX(calc(var(--shimmy-dist, 5) *  1%)); }
+  13%            { clip-path: inset(44% 0 46% 0); transform: translateX(0); }
+  14%, 21%       { clip-path: inset(0   0 100% 0); transform: translateX(calc(var(--shimmy-dist, 5) *  1%)); }
+  15%, 20%       { clip-path: inset(40% 0 60%  0); transform: translateX(calc(var(--shimmy-dist, 5) *  1%)); }
+  25%            { clip-path: inset(40% 0 15%  0); transform: translateX(calc(var(--shimmy-dist, 5) *  1%)); }
+  30%            { clip-path: inset(40% 0 15%  0); transform: translateX(calc(var(--shimmy-dist, 5) * -1%)); }
+  35%, 45%       { clip-path: inset(63% 0 20%  0); transform: translateX(calc(var(--shimmy-dist, 5) * -1%)); }
+  40%            { clip-path: inset(63% 0 20%  0); transform: translateX(calc(var(--shimmy-dist, 5) *  1%)); }
+  50%            { clip-path: inset(63% 0 20%  0); transform: translateX(0); }
+  55%            { clip-path: inset(0   0 90%  0); transform: translateX(calc(var(--shimmy-dist, 5) *  1%)); }
+  60%            { clip-path: inset(0   0 90%  0); transform: translateX(0); }
+  31%, 61%, 100% { clip-path: inset(0   0 100% 0); }
+}
+
+/* ── Button host ─────────────────────────────────────────────────────────────
+ * The <button> itself. NO clip-path lives here, so the hover drop-shadow glow
+ * (cast from the clipped inner box) radiates out instead of being trimmed.
+ * It wraps the inner box tightly, so layout is identical to a plain button.
+ */
+.rg-btn {
+  position: relative;
+  display: inline-flex;
+  padding: 0;
+  border: none;
+  outline: none;
+  background: none;
+  cursor: pointer;
+  -webkit-appearance: none;
+          appearance: none;
+}
+
+.rg-btn--hover {
+  animation: rg-btn-hover-glow 3.2s ease-in-out infinite;
+}
+
+.rg-btn:focus-visible {
+  outline: 2px solid rgba(var(--rg-rgb), 0.8);
+  outline-offset: 3px;
+}
+
+.rg-btn--disabled {
+  opacity: 0.38;
+  cursor: not-allowed;
+  pointer-events: none;
+  animation: none !important;
+}
+
+/* ── Inner shape box ─────────────────────────────────────────────────────────
+ * Owns the polygon clip-path, fill, text and the diagonal border.
+ */
+.rg-btn__box {
+  --shimmy-dist: 5;
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  clip-path: var(--rg-btn-shape);
+  user-select: none;
+  white-space: nowrap;
+  font-family: var(--rg-btn-font);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+
+/*
+ * Fill layer. The box background paints the full silhouette; this layer sits
+ * on top in the fill color.
+ *
+ * AT REST it's flush on the straight edges (so they show NO border) but pulled
+ * in along the two diagonals — so only the diagonal cuts show a colored border.
+ *
+ * ON HOVER it insets 2px on every edge and re-clips to the full shape, so the
+ * whole outline appears (black) while the diagonals stay bordered too.
+ */
+.rg-btn__box::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  clip-path: var(--rg-diag-shape);
+  background: var(--rg-fill);
+  transition: background 0.14s ease;
+}
+
+.rg-btn--hover .rg-btn__box::before {
+  inset: 2px;
+  clip-path: var(--rg-btn-shape);
+}
+
+/* Corner label */
+.rg-btn__box::after {
+  content: 'RG';
+  position: absolute;
+  bottom: 2px;
+  right: 6px;
+  font-size: 7px;
+  letter-spacing: 1px;
+  padding: 1px 3px;
+  line-height: 1;
+  background: rgba(var(--rg-rgb), 0.85);
+  color: var(--rg-btn-dark);
+  font-weight: 700;
+  font-family: var(--rg-btn-font);
+  pointer-events: none;
+  transition: background 0.12s ease;
+  z-index: 5;
+}
+
+.rg-btn--hover .rg-btn__box::after {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+/* ── Glitch overlay ──────────────────────────────────────────────────────── */
+.rg-btn__glitch {
+  display: block;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  pointer-events: none;
+  filter:
+    drop-shadow(-2px  2px rgba(var(--rg-rgb), 0.75))
+    drop-shadow(-1px -1px rgba(var(--rg-rgb), 0.45))
+    drop-shadow( 2px  2px rgba(var(--rg-sB),  0.55));
+}
+
+/* The scratch block: solid BLACK so the flipped ghost text reads as
+   colored-on-black (matching the reference). */
+.rg-btn__glitch::after {
+  content: '';
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: #000;
+  animation: rg-btn-shimmy 2s infinite alternate ease-in-out;
+}
+
+.rg-btn--hover .rg-btn__glitch::after { display: block; }
+
+/* ── Text label with shimmy ghost ───────────────────────────────────────── */
+.rg-btn__label {
+  position: relative;
+  z-index: 2;
+  display: block;
+  white-space: nowrap;
+}
+
+/* Ghost copy that shimmies on the black scratch block — item color, not dark */
+.rg-btn__label::after {
+  content: attr(data-text);
+  display: none;
+  position: absolute;
+  inset: 0;
+  color: rgb(var(--rg-rgb));
+  text-shadow: 0 1px rgba(var(--rg-sB), 0.9);
+  animation: rg-btn-shimmy 2s infinite alternate ease-in-out;
+}
+
+.rg-btn--hover .rg-btn__label::after { display: block; }
+
+/* No-glitch variant: keep border + glow + color flip, drop the scratch text */
+.rg-btn--hover .rg-btn__box--no-glitch .rg-btn__label::after { display: none; }
+
+/* No-glitch hover is a slow, eased ease-in-out fade rather than a snap */
+.rg-btn__box--no-glitch {
+  transition: background 0.45s ease-in-out, color 0.45s ease-in-out;
+}
+.rg-btn__box--no-glitch::before {
+  transition: background 0.45s ease-in-out, inset 0.45s ease-in-out, clip-path 0.45s ease-in-out;
+}
+
+/* Motion sensitivity: reduced-motion users get the calm (no-glitch) button —
+   the scratch overlay and pulsing glow are dropped, leaving a steady glow. */
+@media (prefers-reduced-motion: reduce) {
+  .rg-btn__glitch { display: none !important; }
+  .rg-btn--hover .rg-btn__label::after { display: none !important; }
+  .rg-btn--hover {
+    animation: none !important;
+    filter: drop-shadow(0 0 8px rgba(var(--rg-rgb), 0.45));
+  }
+  .rg-btn__box {
+    transition: background 0.3s ease, color 0.3s ease;
+  }
+}
+
+/* ─── Sonner toasts: neon style ──────────────────────────────────────────── */
+[data-sonner-toast][data-styled=true] {
+  background: hsl(130 12% 6%) !important;
+  border: 1px solid #F9E900 !important;
+  box-shadow: 0 0 16px 2px rgba(249,233,0,0.3) !important;
+  color: hsl(133 100% 50%) !important;
+}
+
+[data-sonner-toast][data-styled=true] [data-close-button] {
+  position: absolute !important;
+  left: auto !important;
+  right: 8px !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  height: 28px !important;
+  width: 28px !important;
+  border-radius: 4px !important;
+  border: none !important;
+  background: transparent !important;
+  color: rgba(249, 233, 0, 0.5) !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  cursor: pointer !important;
+  transition: color 150ms ease, background 150ms ease !important;
+}
+[data-sonner-toast][data-styled=true] [data-close-button]:hover {
+  color: #F9E900 !important;
+  background: rgba(249, 233, 0, 0.12) !important;
+}
+[data-sonner-toast][data-styled=true] [data-close-button] svg {
+  width: 14px !important;
+  height: 14px !important;
+}
+[data-sonner-toast][data-styled=true]:has([data-description]) [data-close-button] {
+  top: 14px !important;
+  transform: none !important;
+}
+
+/* ─── Text-variant button: underline grows from the center outward ────────── */
+.rg-btn-text::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: currentColor;
+  transform: scaleX(0);
+  transform-origin: center;
+  transition: transform 0.28s ease-in-out;
+  pointer-events: none;
+}
+.rg-btn-text:hover:not(:disabled)::after,
+.rg-btn-text:focus-visible::after {
+  transform: scaleX(1);
+}
+
+/* ═══ Cyber panel — futuristic tech card / modal (Jhey-style) ═════════════════
+ * Usage:
+ *   <div class="cyber-panel">                glow host (no clip → glow shows)
+ *     <div class="cyber-panel__frame">       accent border layer
+ *       <div class="cyber-panel__inner">     dark translucent surface + content
+ * Recolor by setting --cyber-accent (H S L triplet) on any ancestor.
+ */
+:root {
+  --cyber-corner: 16px;
+  --cyber-bw: 2px;
+  --cyber-accent: 191 100% 50%;     /* neon cyan, matches --accent */
+  --cyber-panel-bg: 130 14% 6.5%;
+  --cyber-shape: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--cyber-corner)),
+    calc(100% - var(--cyber-corner)) 100%,
+    0 100%
+  );
+}
+
+.cyber-panel {
+  position: relative;
+  display: block;
+  filter: drop-shadow(0 0 12px hsl(var(--cyber-accent) / 0.22));
+}
+
+/* Accent border: paints the full clipped silhouette; the inner fill is inset
+   2px and re-clipped, leaving a clean neon edge on every side incl. the notch. */
+.cyber-panel__frame {
+  position: relative;
+  clip-path: var(--cyber-shape);
+  background: hsl(var(--cyber-accent));
+  padding: var(--cyber-bw);
+}
+
+.cyber-panel__inner {
+  position: relative;
+  clip-path: var(--cyber-shape);
+  background-color: hsl(var(--cyber-panel-bg) / 0.94);
+  /* Gradient is in background-image so it stays below all content (not a ::before
+     which paints in stacking category 6, above non-positioned children). */
+  background-image:
+    var(--rg-scanline-image),
+    radial-gradient(120% 90% at 0% 0%, hsl(var(--cyber-accent) / 0.10), transparent 55%);
+  backdrop-filter: saturate(160%) blur(6px);
+  color: hsl(133 100% 50%);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+/* Tiny technical label, top-right (e.g. "v001.e1349") */
+.cyber-version {
+  position: absolute;
+  top: 10px;
+  right: 16px;
+  z-index: 3;
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: hsl(var(--cyber-accent) / 0.6);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  pointer-events: none;
+}
+
+/* Uppercase mono heading with a glowing accent underline */
+.cyber-heading {
+  position: relative;
+  margin: 0;
+  padding-bottom: 8px;
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: hsl(var(--cyber-accent));
+  text-shadow: 0 0 12px hsl(var(--cyber-accent) / 0.5);
+}
+.cyber-heading::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 2px;
+  background: hsl(var(--cyber-accent));
+  box-shadow: 0 0 8px hsl(var(--cyber-accent) / 0.7);
+}
+
+/* Console housing the keys are mounted on — thick base edge.
+   Tinted a darkened shade of the button color (set via --rg-rgb) so it stays
+   visible against the dark page instead of disappearing as near-black. */
+.rg-group-wrap {
+  --rg-base: color-mix(in srgb, rgb(var(--rg-rgb, 0 212 255)) 42%, #04070b);
+  border-radius: 5px;
+  border-bottom: 10px solid var(--rg-base);
+  box-shadow: 0 7px 11px rgba(0, 0, 0, 0.5);
+}
+.rg-group-wrap--vertical {
+  /* Keep the same 10px bottom base as the horizontal group, just no side edge */
+  border-right: none;
+}
+
+/* ═══ Grouped buttons — tactile "heavy machine" keys ═════════════════════════
+ * Dark keycap so the neon label keeps a high contrast ratio (AA) in every
+ * state; bevel + press translate give the physical feel. Recolor via --rg-rgb.
+ */
+.rg-group-btn {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: 'Cyber', 'JetBrains Mono', ui-sans-serif, sans-serif;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  cursor: pointer;
+  user-select: none;
+  border: 2px solid rgba(var(--rg-rgb), 0.7);
+  background: linear-gradient(180deg, hsl(130 13% 7%), hsl(130 16% 4%));
+  text-shadow: 0 0 8px rgba(var(--rg-rgb), 0.35);
+  /* Raised key sitting on a tall 6px base ledge */
+  transform: translateY(0);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.08),
+    0 6px 0 0 color-mix(in srgb, rgb(var(--rg-rgb)) 38%, #04070b);
+  transition: background 150ms ease, box-shadow 120ms ease,
+              transform 90ms cubic-bezier(0.34, 0, 0.36, 1), border-color 150ms ease;
+}
+
+/* Hover: travels DOWN onto its base (ledge shrinks 6px→2px) for a firm press,
+   the rim lights and a neon glow blooms. z-index lifts it so ALL four borders
+   render above the overlapping neighbours (not just the last key). Keycap stays
+   dark so the neon label holds WCAG AA. */
+.rg-group-btn:hover {
+  z-index: 3;
+  transform: translateY(4px);
+  background:
+    linear-gradient(180deg, rgba(var(--rg-rgb), 0.10), rgba(var(--rg-rgb), 0.04)),
+    linear-gradient(180deg, hsl(130 13% 7%), hsl(130 16% 4%));
+  border-color: rgba(var(--rg-rgb), 1);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.09),
+    0 2px 0 0 color-mix(in srgb, rgb(var(--rg-rgb)) 38%, #04070b),
+    0 0 18px rgba(var(--rg-rgb), 0.55);
+}
+
+/* Press: bottoms out fully into the housing */
+.rg-group-btn:active {
+  z-index: 3;
+  transform: translateY(6px);
+  background:
+    linear-gradient(180deg, rgba(var(--rg-rgb), 0.08), rgba(var(--rg-rgb), 0.16)),
+    linear-gradient(180deg, hsl(130 14% 5%), hsl(130 16% 4%));
+  box-shadow:
+    inset 0 3px 7px rgba(0, 0, 0, 0.78),
+    inset 0 0 12px rgba(var(--rg-rgb), 0.22),
+    0 0 12px rgba(var(--rg-rgb), 0.35);
+}
+
+.rg-group-btn:focus-visible {
+  outline: 2px solid rgba(var(--rg-rgb), 0.9);
+  outline-offset: 2px;
+  z-index: 3;
+}
+
+.rg-group-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* ═══ Cyber form controls ════════════════════════════════════════════════════ */
+.cyber-label {
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 12px;
+  color: hsl(var(--cyber-accent, 191 100% 50%) / 0.85);
+}
+
+.cyber-field {
+  background: hsl(130 14% 7%);
+  border: 2px solid hsl(var(--cyber-accent, 191 100% 50%) / 0.5);
+  color: hsl(133 100% 50%);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.cyber-field::placeholder { color: hsl(133 22% 36%); }
+.cyber-field:focus,
+.cyber-field:focus-within {
+  border-color: hsl(var(--cyber-accent, 191 100% 50%));
+  box-shadow: 0 0 12px hsl(var(--cyber-accent, 191 100% 50%) / 0.35);
+  outline: none;
+}
+.cyber-field[data-disabled='true'],
+.cyber-field:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Checkbox / radio tick boxes */
+.cyber-check {
+  background: hsl(130 14% 8%);
+  border: 2px solid hsl(var(--cyber-accent, 191 100% 50%) / 0.6);
+  transition: background 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.cyber-check[data-state='checked'] {
+  background: hsl(var(--cyber-accent, 191 100% 50%));
+  border-color: hsl(var(--cyber-accent, 191 100% 50%));
+  box-shadow: 0 0 10px hsl(var(--cyber-accent, 191 100% 50%) / 0.55);
+}
+.cyber-radio[data-state='checked'] {
+  border-color: hsl(var(--cyber-accent, 191 100% 50%));
+  box-shadow: 0 0 10px hsl(var(--cyber-accent, 191 100% 50%) / 0.5);
+}
+
+/* Switch track + thumb */
+.cyber-switch {
+  background: hsl(130 14% 12%);
+  border: 2px solid hsl(var(--cyber-accent, 191 100% 50%) / 0.45);
+  transition: background 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+.cyber-switch[data-state='checked'] {
+  background: hsl(var(--cyber-accent, 191 100% 50%) / 0.22);
+  border-color: hsl(var(--cyber-accent, 191 100% 50%));
+  box-shadow: inset 0 0 10px hsl(var(--cyber-accent, 191 100% 50%) / 0.4);
+}
+
+/* ═══ Dialog: twitchy glitch entrance ════════════════════════════════════════ */
+@keyframes rg-dialog-glitch-in {
+  0%   { opacity: 0; transform: translate(0, 0); clip-path: inset(0 0 100% 0); }
+  7%   { opacity: 1; transform: translate(-8px, 0); clip-path: inset(0 0 46% 0);
+         filter: drop-shadow(-5px 0 0 rgba(255, 0, 60, 0.85)) drop-shadow(5px 0 0 rgba(0, 212, 255, 0.85)); }
+  14%  { transform: translate(8px, 0); clip-path: inset(34% 0 24% 0);
+         filter: drop-shadow(5px 0 0 rgba(255, 0, 60, 0.7)) drop-shadow(-5px 0 0 rgba(0, 212, 255, 0.7)); }
+  21%  { transform: translate(-5px, 2px); clip-path: inset(8% 0 62% 0); filter: none; }
+  29%  { transform: translate(6px, -2px); clip-path: inset(0 0 0 0);
+         filter: drop-shadow(-4px 0 0 rgba(255, 0, 60, 0.6)) drop-shadow(4px 0 0 rgba(0, 212, 255, 0.6)); }
+  37%  { transform: translate(-3px, 0); clip-path: inset(72% 0 4% 0); filter: none; }
+  45%  { transform: translate(3px, 1px); clip-path: inset(0 0 0 0); }
+  55%  { transform: translate(-2px, 0);
+         filter: drop-shadow(-2px 0 0 rgba(255, 0, 60, 0.4)) drop-shadow(2px 0 0 rgba(0, 212, 255, 0.4)); }
+  70%  { transform: translate(1px, 0); filter: none; }
+  100% { opacity: 1; transform: translate(0, 0); clip-path: inset(0 0 0 0);
+         filter: drop-shadow(0 0 12px hsl(var(--cyber-accent, 191 100% 50%) / 0.22)); }
+}
+@keyframes rg-dialog-glitch-out {
+  0%   { opacity: 1; transform: translate(0, 0); }
+  30%  { opacity: 1; transform: translate(4px, 0); clip-path: inset(0 0 55% 0); }
+  60%  { opacity: 0.6; transform: translate(-4px, 0); clip-path: inset(45% 0 0 0); }
+  100% { opacity: 0; transform: translate(0, 0); clip-path: inset(50% 0 50% 0); }
+}
+.rg-dialog-glitch[data-state='open'] {
+  animation: rg-dialog-glitch-in 460ms linear both;
+}
+.rg-dialog-glitch[data-state='closed'] {
+  animation: rg-dialog-glitch-out 200ms ease-in both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .rg-dialog-glitch[data-state='open']  { animation: none; opacity: 1; }
+  .rg-dialog-glitch[data-state='closed'] { animation: none; opacity: 0; }
+}
+
+/* Periodic red/cyan text-split glitch on the dialog heading.
+   Two ghost copies of the text sit over the real heading and burst into an
+   RGB-split scramble, then hide — first burst 3.5s after open, every 5s after. */
+.rg-glitch-ghost {
+  position: absolute;
+  left: 0;
+  top: 0;
+  width: 100%;
+  pointer-events: none;
+  user-select: none;
+  opacity: 0;
+}
+.rg-glitch-ghost--r {
+  color: #ff003c;
+  text-shadow: 0 0 6px rgba(255, 0, 60, 0.55);
+  animation: rg-text-glitch-r 5s linear 3s infinite;
+}
+.rg-glitch-ghost--c {
+  color: #00e0ff;
+  text-shadow: 0 0 6px rgba(0, 212, 255, 0.55);
+  animation: rg-text-glitch-c 5s linear 3s infinite;
+}
+/* Body text runs on a different delay + period so it drifts out of sync with
+   the heading — they overlap only occasionally rather than every cycle. */
+.rg-glitch-ghost--alt.rg-glitch-ghost--r,
+.rg-glitch-ghost--alt.rg-glitch-ghost--c {
+  animation-delay: 4.5s;
+  animation-duration: 6.5s;
+}
+@keyframes rg-text-glitch-r {
+  0%   { opacity: 0.9; transform: translate(-3px, 0); clip-path: inset(8% 0 60% 0); }
+  2%   { transform: translate(3px, 0);  clip-path: inset(50% 0 18% 0); }
+  3.5% { transform: translate(-4px, 0); clip-path: inset(22% 0 44% 0); }
+  5%   { transform: translate(2px, 0);  clip-path: inset(70% 0 6% 0); }
+  6.5% { transform: translate(-2px, 0); clip-path: inset(34% 0 40% 0); }
+  8%   { opacity: 0.9; transform: translate(1px, 0); clip-path: inset(0 0 0 0); }
+  9%   { opacity: 0; transform: translate(0, 0); }
+  100% { opacity: 0; transform: translate(0, 0); }
+}
+@keyframes rg-text-glitch-c {
+  0%   { opacity: 0.9; transform: translate(3px, 0);  clip-path: inset(60% 0 8% 0); }
+  2%   { transform: translate(-3px, 0); clip-path: inset(18% 0 50% 0); }
+  3.5% { transform: translate(4px, 0);  clip-path: inset(44% 0 22% 0); }
+  5%   { transform: translate(-2px, 0); clip-path: inset(6% 0 70% 0); }
+  6.5% { transform: translate(2px, 0);  clip-path: inset(40% 0 34% 0); }
+  8%   { opacity: 0.9; transform: translate(-1px, 0); clip-path: inset(0 0 0 0); }
+  9%   { opacity: 0; transform: translate(0, 0); }
+  100% { opacity: 0; transform: translate(0, 0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rg-glitch-ghost { animation: none !important; }
+}
+
+/* ═══ Cyber popovers & menus ═════════════════════════════════════════════════ */
+.cyber-pop {
+  background-color: hsl(130 14% 6.5% / 0.97);
+  background-image: var(--rg-scanline-image);
+  border: 2px solid hsl(var(--cyber-accent, 191 100% 50%) / 0.6);
+  color: hsl(133 100% 50%);
+  backdrop-filter: saturate(160%) blur(8px);
+  box-shadow: 0 0 24px hsl(var(--cyber-accent, 191 100% 50%) / 0.18);
+  clip-path: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--cyber-pop-corner, 10px)),
+    calc(100% - var(--cyber-pop-corner, 10px)) 100%,
+    0 100%
+  );
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.cyber-item {
+  color: hsl(133 65% 58%);
+  border-radius: 2px;
+  transition: background 0.12s ease, color 0.12s ease;
+}
+.cyber-item:focus,
+.cyber-item[data-highlighted],
+.cyber-item[data-state='checked'],
+.cyber-item[data-state='open'] {
+  background: hsl(var(--cyber-accent, 191 100% 50%) / 0.14);
+  color: hsl(var(--cyber-accent, 191 100% 50%));
+  outline: none;
+}
+
+/* ═══ Cyber tabs ═════════════════════════════════════════════════════════════ */
+.cyber-tab {
+  color: hsl(133 45% 50%);
+}
+.cyber-tab:hover {
+  color: hsl(133 80% 60%);
+}
+.cyber-tab[data-state='active'] {
+  background: hsl(var(--cyber-accent, 191 100% 50%));
+  color: hsl(130 14% 5%);
+  box-shadow: 0 0 10px hsl(var(--cyber-accent, 191 100% 50%) / 0.5);
+}
+
+/* ═══ Cyber textarea / multi-line fields ════════════════════════════════════
+ * Shape: diagonal cut bottom-right, square corners everywhere else.
+ * Structure: .cyber-field-wrap > .cyber-field-frame > textarea.cyber-field-inner
+ */
+:root {
+  --cyber-field-corner: 12px;
+  --cyber-field-shape: polygon(
+    0 0,
+    100% 0,
+    100% calc(100% - var(--cyber-field-corner)),
+    calc(100% - var(--cyber-field-corner)) 100%,
+    0 100%
+  );
+}
+
+.cyber-field-wrap {
+  position: relative;
+  display: block;
+  transition: filter 150ms ease;
+}
+
+.cyber-field-frame {
+  clip-path: var(--cyber-field-shape);
+  background: hsl(var(--cyber-accent, 191 100% 50%) / 0.5);
+  padding: 2px;
+  transition: background 150ms ease;
+}
+
+.cyber-field-inner {
+  clip-path: var(--cyber-field-shape);
+  background-color: hsl(130 14% 7%);
+  color: hsl(133 100% 50%);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+  display: block;
+  width: 100%;
+}
+
+.cyber-field-wrap:focus-within .cyber-field-frame {
+  background: hsl(var(--cyber-accent, 191 100% 50%));
+}
+
+.cyber-field-wrap:focus-within {
+  filter: drop-shadow(0 0 10px hsl(var(--cyber-accent, 191 100% 50%) / 0.4));
+}
+
+/* ═══ Cyber selection triggers ══════════════════════════════════════════════
+ * Shape: diagonal cut top-right, square corners everywhere else.
+ * Structure: .cyber-trigger-wrap > .cyber-trigger-frame > .cyber-trigger-inner
+ */
+:root {
+  --cyber-trigger-corner: 12px;
+  --cyber-trigger-shape: polygon(
+    0 0,
+    calc(100% - var(--cyber-trigger-corner)) 0,
+    100% var(--cyber-trigger-corner),
+    100% 100%,
+    0 100%
+  );
+}
+
+.cyber-trigger-wrap {
+  position: relative;
+  display: block;
+  transition: filter 150ms ease;
+}
+
+.cyber-trigger-frame {
+  clip-path: var(--cyber-trigger-shape);
+  background: hsl(var(--cyber-accent, 191 100% 50%) / 0.5);
+  padding: 2px;
+  transition: background 150ms ease;
+}
+
+.cyber-trigger-inner {
+  clip-path: var(--cyber-trigger-shape);
+  background-color: hsl(var(--cyber-panel-bg, 130 14% 6.5%));
+  color: hsl(133 100% 50%);
+  font-family: 'JetBrains Mono', ui-monospace, monospace;
+}
+
+.cyber-trigger-wrap:focus-within .cyber-trigger-frame,
+.cyber-trigger-wrap:has([data-state='open']) .cyber-trigger-frame {
+  background: hsl(var(--cyber-accent, 191 100% 50%));
+}
+
+.cyber-trigger-wrap:focus-within,
+.cyber-trigger-wrap:has([data-state='open']) {
+  filter: drop-shadow(0 0 10px hsl(var(--cyber-accent, 191 100% 50%) / 0.4));
+}
+
+/* ─── Table: scanline overlay ────────────────────────────────────────────────
+ * Floats scanlines on top of the table surface via ::after.
+ * pointer-events: none + z-index: 1 keeps rows fully interactive.
+ */
+.rg-table {
+  position: relative;
+}
+.rg-table::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background-image: var(--rg-scanline-image);
+  opacity: 0.65;
+  border-radius: inherit;
+}
+
+/* ─── Scanline texture (CRT background, not an overlay) ───────────────────────
+ * Painted as the BACKGROUND-IMAGE of surfaces (page + panels) rather than a top
+ * overlay, so every element with its own surface — buttons especially — paints
+ * on top and never shows scanlines across its face. Themeable via [data-scanline].
+ */
+:root                        { --rg-scanline: rgba(120, 255, 160, 0.15); }
+html[data-scanline='green']  { --rg-scanline: rgba(120, 255, 160, 0.15); }
+html[data-scanline='blue']   { --rg-scanline: rgba(120, 200, 255, 0.15); }
+html[data-scanline='red']    { --rg-scanline: rgba(255,  90,  90, 0.15); }
+html[data-scanline='gold']   { --rg-scanline: rgba(255, 205,  70, 0.15); }
+
+:root {
+  --rg-scanline-image: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    var(--rg-scanline) 3px,
+    var(--rg-scanline) 4px
+  );
+}
